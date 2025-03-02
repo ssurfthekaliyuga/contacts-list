@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	recoverer "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -67,8 +68,13 @@ func main() {
 		ErrorHandler:          errorHandler,
 	})
 
-	server.Use(recoverer.New())
 	server.Use(logger.New())
+	server.Use(recoverer.New())
+	server.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET, POST, PUT, DELETE",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	})) //todo setup it for dev and prod
 
 	v1Group := server.Group("/v1")
 

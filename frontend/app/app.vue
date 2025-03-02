@@ -65,6 +65,9 @@
 </template>
 
 <script setup lang="ts">
+//todo delete does not work correctly
+//todo update does not call fetch
+
 interface Contact {
   ID: number
   fullName: string
@@ -93,7 +96,7 @@ const loading = ref(false)
 const fetchContacts = async () => {
   try {
     const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
-      query: { page: 1, size: 100 }
+      query: { page: 0, size: 100 }
     })
 
     if (response.error) {
@@ -153,7 +156,8 @@ const deleteContact = async (id: number) => {
   try {
     const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
       method: 'DELETE',
-      body: { id }
+      body: { id },
+      parseResponse: false
     })
 
     if (response.error) {
