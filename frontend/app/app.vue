@@ -30,6 +30,13 @@
       </div>
     </div>
 
+    <!-- Pagination Controls -->
+    <div class="flex justify-between mt-6">
+      <button @click="prevPage" :disabled="currentPage === 0" class="btn btn-outline">Previous</button>
+      <span>Page {{ currentPage + 1 }}</span>
+      <button @click="nextPage" :disabled="!hasMore" class="btn btn-outline">Next</button>
+    </div>
+
     <!-- Add Contact Modal -->
     <div class="modal" :class="{ 'modal-open': showAddModal }">
       <div class="modal-box">
@@ -65,9 +72,6 @@
 </template>
 
 <script setup lang="ts">
-//todo delete does not work correctly
-//todo update does not call fetch
-
 interface Contact {
   ID: number
   fullName: string
@@ -93,17 +97,26 @@ const showAddModal = ref(false)
 const showEditModal = ref(false)
 const loading = ref(false)
 
+// Переменные пагинации
+const currentPage = ref(0)
+const pageSize = 10
+const hasMore = ref(true)
+
 const fetchContacts = async () => {
+  loading.value = true
   try {
-    const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
-      query: { page: 0, size: 100 }
+    const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
+      query: { page: currentPage.value, size: pageSize }
     })
 
     if (response.error) {
       throw new Error(response.error.msg)
     }
 
+    // Записываем контакты, либо устанавливаем пустой массив
     contacts.value = response.contacts || []
+    // Если вернулось меньше записей, чем ожидается, это последняя страница
+    hasMore.value = (contacts.value.length === pageSize)
   } catch (error) {
     alert(error instanceof Error ? error.message : 'Error fetching contacts')
   } finally {
@@ -111,9 +124,21 @@ const fetchContacts = async () => {
   }
 }
 
+const nextPage = async () => {
+  if (!hasMore.value) return
+  currentPage.value++
+  await fetchContacts()
+}
+
+const prevPage = async () => {
+  if (currentPage.value <= 0) return
+  currentPage.value--
+  await fetchContacts()
+}
+
 const createContact = async () => {
   try {
-    const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
+    const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
       method: 'POST',
       body: newContact.value
     })
@@ -123,6 +148,7 @@ const createContact = async () => {
     }
 
     newContact.value = {}
+    // Перезагружаем текущую страницу
     await fetchContacts()
     closeAddModal()
   } catch (error) {
@@ -134,7 +160,7 @@ const updateContact = async () => {
   try {
     if (!editingContact.value?.ID) return
 
-    const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
+    const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
       method: 'PUT',
       body: editingContact.value
     })
@@ -151,16 +177,14 @@ const updateContact = async () => {
 }
 
 const deleteContact = async (id: number) => {
-  if (!confirm('Are you sure you want to delete this contact?')) return
-
   try {
-    const response = await $fetch<ApiResponse>(`${runtimeConfig.public.apiBase}/v1/contact`, {
+    const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
       method: 'DELETE',
       body: { id },
       parseResponse: false
     })
 
-    if (response.error) {
+    if (response?.error) {
       throw new Error(response.error.msg)
     }
 
