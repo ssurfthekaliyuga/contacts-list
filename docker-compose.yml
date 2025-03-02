@@ -1,0 +1,69 @@
+#todo bookwarm slim instead alpine
+#todo check users in go deploy container
+#todo postgres user for backend service
+#todo run or connect to frontend container
+#todo rename frontends to web-app backend to service
+
+#todo important написать заметку о том чо docker run -d выдает ошибку если контейнер занят
+#todo а docker compose up просто выведет id уже запущенного поэтому для dev контейнеров все же необходимо использовать compose
+
+#todo зачем нужен tty: true
+
+services:
+  contacts-list-backend:
+    build: backend
+    container_name: contacts-list-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_USER: $POSTGRES_ADMIN_USER
+      POSTGRES_PASSWORD: $POSTGRES_ADMIN_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_HOST: contacts-list-db
+      POSTGRES_PORT: "5432"
+      HTTP_SERVER_ADDRESS: "0.0.0.0"
+      HTTP_SERVER_PORT: "8080"
+    networks:
+      - contacts-list-internal-network
+    depends_on:
+      - contacts-list-db
+
+  contacts-list-db:
+    image: postgres:16
+    container_name: contacts-list-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: $POSTGRES_ADMIN_USER
+      POSTGRES_PASSWORD: $POSTGRES_ADMIN_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+    volumes:
+      - postgres-volume:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - contacts-list-internal-network
+
+  contacts-list-pgadmin:
+    image: dpage/pgadmin4
+    container_name: contacts-list-pgadmin
+    restart: unless-stopped #todo is it good
+    ports:
+      - "80:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: $PGADMIN_DEFAULT_EMAIL
+      PGADMIN_DEFAULT_PASSWORD: $PGADMIN_DEFAULT_PASSWORD
+    volumes:
+      - pgadmin-volume:/var/lib/pgadmin
+    networks:
+      - contacts-list-internal-network
+    depends_on:
+      - contacts-list-db
+
+volumes:
+  postgres-volume:
+  pgadmin-volume:
+
+networks:
+  contacts-list-internal-network:
