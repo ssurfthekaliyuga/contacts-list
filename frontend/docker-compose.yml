@@ -3,11 +3,11 @@ services:
     container_name: contacts-list-frontend-dev
     image: node:22.8-bookworm-slim
     ports:
-      - "3000:3000"
+      - "2999:3000"
     tty: true #todo (note it) container will never stop
     user: node
     working_dir: /home/node/app
     volumes:
-      - ./app:/home/node/app
+      - ./src:/home/node/app
     environment:
-      NUXT_PUBLIC_BACKEND_URL: "http://localhost:8080"
+      NUXT_PUBLIC_API_BASE: "http://localhost:8080"

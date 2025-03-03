@@ -106,7 +106,7 @@ const fetchContacts = async () => {
   loading.value = true
   try {
     const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
-      query: { page: currentPage.value, size: pageSize }
+      query: {page: currentPage.value, size: pageSize}
     })
 
     if (response.error) {
@@ -180,7 +180,7 @@ const deleteContact = async (id: number) => {
   try {
     const response = await $fetch<ApiResponse>(`${apiBase}/v1/contact`, {
       method: 'DELETE',
-      body: { id },
+      body: {id},
       parseResponse: false
     })
 
@@ -198,7 +198,7 @@ const openAddModal = () => showAddModal.value = true
 const closeAddModal = () => showAddModal.value = false
 
 const openEditModal = (contact: Contact) => {
-  editingContact.value = { ...contact }
+  editingContact.value = {...contact}
   showEditModal.value = true
 }
 
