@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"contacts-list/internal/domain"
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"os-lab-3-1/internal/domain"
 )
 
 type contactCreator interface {

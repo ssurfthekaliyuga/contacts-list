@@ -1,19 +1,8 @@
-#todo bookwarm slim instead alpine
-#todo check users in go deploy container
 #todo postgres user for backend service
-#todo run or connect to frontend container
-#todo rename frontends to web-app backend to service
-#todo try to download pkg from private repository 
+#todo try to download pkg from private repository
 
 #todo important написать заметку о том чо docker run -d выдает ошибку если контейнер занят
 #todo а docker compose up просто выведет id уже запущенного поэтому для dev контейнеров все же необходимо использовать compose
-
-#todo remove from package.json   "config": {
-#    "nuxt": {
-#      "host": "0.0.0.0",
-#      "port": "3000"
-#    }
-#  }
 
 services:
   contacts-list-frontend:

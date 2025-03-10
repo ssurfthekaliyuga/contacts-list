@@ -1,10 +1,10 @@
 package controllers
 
 import (
+	"contacts-list/internal/domain"
 	"context"
 	"errors"
 	"github.com/gofiber/fiber/v2"
-	"os-lab-3-1/internal/domain"
 )
 
 type contactUpdater interface {

@@ -23,7 +23,7 @@ type Config struct {
 }
 
 func MustLoad() *Config {
-	if len(os.Args) == 2 && os.Args[1] == "local" {
+	if len(os.Args) == 2 && os.Args[1] == "local" { //todo
 		return &Config{
 			Postgres: Postgres{
 				Port:     "5432",

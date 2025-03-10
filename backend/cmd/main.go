@@ -1,6 +1,9 @@
 package main
 
 import (
+	"contacts-list/internal/config"
+	"contacts-list/internal/controllers"
+	"contacts-list/internal/repositories"
 	"context"
 	"errors"
 	"fmt"
@@ -11,9 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
-	"os-lab-3-1/internal/config"
-	"os-lab-3-1/internal/controllers"
-	"os-lab-3-1/internal/repositories"
 	"os/signal"
 	"time"
 )
@@ -74,7 +74,7 @@ func main() {
 		AllowOrigins: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept",
-	})) //todo setup it for dev and prod
+	}))
 
 	v1Group := server.Group("/v1")
 

@@ -1,12 +1,12 @@
 package repositories
 
 import (
+	"contacts-list/internal/domain"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"os-lab-3-1/internal/domain"
 )
 
 type ContactsRepository struct {

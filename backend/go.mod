@@ -1,4 +1,4 @@
-module os-lab-3-1
+module contacts-list
 
 go 1.24.0
 
