@@ -1,5 +1,9 @@
 #todo postgres user for backend service
 #todo try to download pkg from private repository
+#todo nginx
+#todo ssl
+#todo cors
+#todo configs
 
 #todo important написать заметку о том чо docker run -d выдает ошибку если контейнер занят
 #todo а docker compose up просто выведет id уже запущенного поэтому для dev контейнеров все же необходимо использовать compose
