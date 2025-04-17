@@ -1,0 +1,17 @@
+postgres:
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  db: ${POSTGRES_DB}
+  host: localhost
+  port: 5432
+
+http_server:
+  address: localhost
+  port: 8081
+
+logger:
+  level: -100
+  add_source: true
+  handler_type: text
+
+

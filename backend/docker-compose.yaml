@@ -1,0 +1,22 @@
+services:
+  contacts-service-postgres:
+    image: postgres:16
+    container_name: contacts_service_postgres
+    restart: no
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - contacts-service-postgres-volume:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - contacts-service-network
+
+volumes:
+  contacts-service-postgres-volume:
+
+networks:
+  contacts-service-network:

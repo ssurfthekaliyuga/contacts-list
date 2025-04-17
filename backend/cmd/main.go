@@ -1,53 +1,74 @@
 package main
 
 import (
+	"contacts-list/internal/adapters/primary/rest/controllers"
+	loggermw "contacts-list/internal/adapters/primary/rest/middlewares/logger"
+	"contacts-list/internal/adapters/primary/rest/middlewares/request"
 	"contacts-list/internal/config"
-	"contacts-list/internal/controllers"
 	"contacts-list/internal/repositories"
+	"contacts-list/pkg/sl"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	recoverer "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"time"
 )
 
-//todo panics are not logged via fiber/logger
+//todo panics are not logged via fiber/loggermw
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	cfg := config.MustLoad()
+	conf, err := config.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	logger, err := sl.NewLogger(&sl.Options{
+		AddSource:   conf.Logger.AddSource,
+		Level:       slog.Level(conf.Logger.Level),
+		HandlerType: sl.HandlerType(conf.Logger.HandlerType),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	c := sl.ContextWithAttrs(context.Background(), slog.String("1", "1"))
+	logger.InfoContext(c, "1")
+
+	logger.Info("logger was initialized successfully",
+		slog.String("level", slog.Level(conf.Logger.Level).String()),
+		slog.String("handler type", conf.Logger.HandlerType),
+	)
 
 	postgresURL := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
-		cfg.Postgres.User,
-		cfg.Postgres.Password,
-		cfg.Postgres.Host,
-		cfg.Postgres.Port,
-		cfg.Postgres.DB,
+		conf.Postgres.User,
+		conf.Postgres.Password,
+		conf.Postgres.Host,
+		conf.Postgres.Port,
+		conf.Postgres.DB,
 	)
 
-	postgresConnPool, err := pgxpool.New(context.Background(), postgresURL)
+	postgresConnPool, err := pgxpool.New(context.Background(), postgresURL) // TODO: посмотреть на работе как передается конфиг
 	if err != nil {
-		log.Fatalf("cannot connect to postgreSQL: %s", err)
+		logger.Error("cannot connect to postgreSQL", sl.Error(err))
 	}
 	defer postgresConnPool.Close()
 
 	if err = postgresConnPool.Ping(context.Background()); err != nil {
-		log.Fatalf("cannot ping postgreSQL: %s", err)
+		logger.Error("cannot ping postgreSQL", sl.Error(err))
 	}
 
 	contactsRepo := repositories.NewContactsRepository(postgresConnPool)
 
-	errorHandler := func(c *fiber.Ctx, inError error) error {
+	errorHandler := func(c *fiber.Ctx, inError error) error { //todo refactor
 		defaultError := fiber.ErrInternalServerError
 		errors.As(inError, &defaultError)
 
@@ -68,8 +89,11 @@ func main() {
 		ErrorHandler:          errorHandler,
 	})
 
-	server.Use(logger.New())
-	server.Use(recoverer.New())
+	server.Use(request.New())
+	server.Use(loggermw.New(logger, loggermw.NewAttrExtractor(func(ctx context.Context) any {
+		return any(request.Extract)
+	}, "request id")))
+
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",
@@ -84,23 +108,23 @@ func main() {
 	contactsGroup.Put("/", controllers.NewUpdateContact(contactsRepo))
 	contactsGroup.Delete("/", controllers.NewDeleteContact(contactsRepo))
 
-	addr := fmt.Sprintf("%s:%s", cfg.HTTPServer.Address, cfg.HTTPServer.Port)
+	addr := fmt.Sprintf("%s:%s", conf.HTTPServer.Host, conf.HTTPServer.Port)
 
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Fatalf("starting server panic: %v", r)
+				logger.Error("panic occurred while http server running", sl.Panic(r))
 			}
 		}()
 
 		if err = server.Listen(addr); err != nil {
-			log.Fatalf("cannot start http server: %s", err)
+			logger.Error("cannot start http server", sl.Error(err))
 		}
 	}()
 
 	<-ctx.Done()
 
 	if err = server.ShutdownWithTimeout(time.Minute); err != nil {
-		log.Fatalf("Error shutting down the server: %v", err)
+		logger.Error("cannot shutting down the server", sl.Error(err))
 	}
 }
