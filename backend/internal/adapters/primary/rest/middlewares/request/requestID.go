@@ -8,14 +8,11 @@ import (
 )
 
 func New(options ...Option) fiber.Handler {
-	opts := defaultOptions()
-	for _, fn := range options {
-		fn(opts)
-	}
+	conf := config(options)
 
 	return func(c *fiber.Ctx) error {
 		var id string
-		for _, header := range opts.Headers {
+		for _, header := range conf.Headers {
 			id = c.Get(header)
 			if id != "" {
 				break
@@ -23,12 +20,12 @@ func New(options ...Option) fiber.Handler {
 		}
 
 		if id == "" {
-			id = opts.Generator()
+			id = conf.Generator()
 		}
 
 		ctx := c.UserContext()
 		ctx = context.WithValue(c.UserContext(), key{}, id)
-		ctx = sl.ContextWithAttrs(ctx, slog.String(opts.LoggerKey, id))
+		ctx = sl.ContextWithAttrs(ctx, slog.String(conf.LoggerKey, id))
 
 		c.SetUserContext(ctx)
 

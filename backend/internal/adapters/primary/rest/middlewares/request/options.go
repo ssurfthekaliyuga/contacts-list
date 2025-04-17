@@ -31,12 +31,18 @@ func WithLoggerKey(key string) Option {
 	}
 }
 
-func defaultOptions() *Options {
-	return &Options{
+func config(opts []Option) *Options {
+	res := &Options{
 		Generator: generator,
 		Headers:   []string{"X-Request-ID"},
 		LoggerKey: "X-Request-ID",
 	}
+
+	for _, fn := range opts {
+		fn(res)
+	}
+
+	return res
 }
 
 func generator() string {

@@ -12,6 +12,7 @@ type contactProvider interface {
 
 func NewGetContacts(provider contactProvider) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		panic("213")
 		in := domain.GetContactsIn{
 			Page: c.QueryInt("page", 0),
 			Size: c.QueryInt("size", 10),

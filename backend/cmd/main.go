@@ -4,15 +4,14 @@ import (
 	"contacts-list/internal/adapters/primary/rest/controllers"
 	loggermw "contacts-list/internal/adapters/primary/rest/middlewares/logger"
 	"contacts-list/internal/adapters/primary/rest/middlewares/request"
+	"contacts-list/internal/adapters/secondary/postgres"
 	"contacts-list/internal/config"
-	"contacts-list/internal/repositories"
 	"contacts-list/pkg/sl"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
@@ -65,9 +64,11 @@ func main() {
 		logger.Error("cannot ping postgreSQL", sl.Error(err))
 	}
 
-	contactsRepo := repositories.NewContactsRepository(postgresConnPool)
+	contactsRepo := postgres.NewContacts(postgresConnPool)
 
 	errorHandler := func(c *fiber.Ctx, inError error) error { //todo refactor
+		logger.Error("could not process request", sl.Error(inError)) //todo их хендлеров летят только файбер ошибки
+
 		defaultError := fiber.ErrInternalServerError
 		errors.As(inError, &defaultError)
 
@@ -97,9 +98,11 @@ func main() {
 		request.WithLoggerKey("request_id"),
 		request.WithGenerator(generator),
 	))
-	server.Use(loggermw.New(logger))
-	server.Use(requestid.New())
-
+	server.Use(loggermw.New(
+		loggermw.WithLevel(slog.LevelInfo),
+		loggermw.WithLogger(logger),
+		loggermw.WithMessage("complete request"),
+	))
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",

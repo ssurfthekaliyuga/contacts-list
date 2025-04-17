@@ -28,7 +28,7 @@ type HTTPServer struct {
 	Port string `mapstructure:"port"`
 }
 
-type Logger struct {
+type Logger struct { //todo time format
 	Level       int    `mapstructure:"level"`
 	AddSource   bool   `mapstructure:"add_source"`
 	HandlerType string `mapstructure:"handler_type"`
