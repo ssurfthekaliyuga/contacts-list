@@ -1,16 +1,14 @@
 package request
 
 import (
+	"contacts-list/pkg/sl"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"log/slog"
 )
 
 func New(options ...Option) fiber.Handler {
-	opts := &Options{
-		Generator: generator,
-		Headers:   []string{"X-Request-ID"},
-	}
-
+	opts := defaultOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -28,7 +26,9 @@ func New(options ...Option) fiber.Handler {
 			id = opts.Generator()
 		}
 
-		ctx := context.WithValue(c.UserContext(), key{}, id)
+		ctx := c.UserContext()
+		ctx = context.WithValue(c.UserContext(), key{}, id)
+		ctx = sl.ContextWithAttrs(ctx, slog.String(opts.LoggerKey, id))
 
 		c.SetUserContext(ctx)
 

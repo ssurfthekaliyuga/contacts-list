@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"os"
@@ -39,12 +41,9 @@ func main() {
 		panic(err)
 	}
 
-	c := sl.ContextWithAttrs(context.Background(), slog.String("1", "1"))
-	logger.InfoContext(c, "1")
-
 	logger.Info("logger was initialized successfully",
 		slog.String("level", slog.Level(conf.Logger.Level).String()),
-		slog.String("handler type", conf.Logger.HandlerType),
+		slog.String("handler_type", conf.Logger.HandlerType),
 	)
 
 	postgresURL := fmt.Sprintf(
@@ -89,10 +88,17 @@ func main() {
 		ErrorHandler:          errorHandler,
 	})
 
-	server.Use(request.New())
-	server.Use(loggermw.New(logger, loggermw.NewAttrExtractor(func(ctx context.Context) any {
-		return any(request.Extract)
-	}, "request id")))
+	generator := func() string {
+		return uuid.New().String()
+	}
+
+	server.Use(request.New( //todo передавать Next bool для того чтобы фильтровать стоит ли запускать мидл
+		request.WithHeaders("X-Request-ID", "xRequestID"),
+		request.WithLoggerKey("request_id"),
+		request.WithGenerator(generator),
+	))
+	server.Use(loggermw.New(logger))
+	server.Use(requestid.New())
 
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: "*",

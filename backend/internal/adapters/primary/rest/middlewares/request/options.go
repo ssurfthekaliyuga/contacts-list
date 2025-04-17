@@ -7,6 +7,7 @@ import (
 
 type Options struct {
 	Headers   []string
+	LoggerKey string
 	Generator func() string
 }
 
@@ -18,15 +19,23 @@ func WithGenerator(generator func() string) Option {
 	}
 }
 
-func WithHeader(header string) Option {
+func WithHeaders(headers ...string) Option {
 	return func(o *Options) {
-		o.Headers = []string{header}
+		o.Headers = headers
 	}
 }
 
-func WithHeadersList(headers []string) Option {
+func WithLoggerKey(key string) Option {
 	return func(o *Options) {
-		o.Headers = headers
+		o.LoggerKey = key
+	}
+}
+
+func defaultOptions() *Options {
+	return &Options{
+		Generator: generator,
+		Headers:   []string{"X-Request-ID"},
+		LoggerKey: "X-Request-ID",
 	}
 }
 
