@@ -120,7 +120,7 @@ func main() {
 	contactsGroup := v1Group.Group("/contact")
 	contactsGroup.Get("/", controllers.NewGetContacts(contactsRepo))
 	contactsGroup.Post("/", controllers.NewCreateContact(contactsRepo))
-	contactsGroup.Put("/", controllers.NewUpdateContact(contactsRepo))
+	contactsGroup.Put("/", controllers.NewUpdateContact(contactsRepo)) //todo patch
 	contactsGroup.Delete("/", controllers.NewDeleteContact(contactsRepo))
 
 	addr := fmt.Sprintf("%s:%s", conf.HTTPServer.Host, conf.HTTPServer.Port)

@@ -1,10 +1,12 @@
 package postgres
 
 import (
-	"contacts-list/internal/domain"
+	"contacts-list/internal/domain/ents"
+	"contacts-list/internal/domain/errs"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,36 +21,37 @@ func NewContacts(db *pgxpool.Pool) *Contacts {
 	}
 }
 
-func (r *Contacts) GetContacts(ctx context.Context, in domain.GetContactsIn) ([]domain.Contact, error) {
+func (r *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Contact, error) { //todo pagination
 	const query = `
-		SELECT id, full_name, phone_number, note 
+		SELECT id, created_by, full_name, phone_number, note 
 		FROM contacts LIMIT $1 OFFSET $2
+		WHERE created_by = $3
 	`
 
 	limit := in.Size
 	offset := in.Page * in.Size
 
-	rows, err := r.db.Query(ctx, query, limit, offset)
+	rows, err := r.db.Query(ctx, query, limit, offset, in.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	return pgx.CollectRows(rows, collectContacts)
+	return pgx.CollectRows(rows, collectContact)
 }
 
-func (r *Contacts) CreateContact(ctx context.Context, in domain.CreateContactIn) (*domain.Contact, error) {
+func (r *Contacts) Create(ctx context.Context, in ents.CreateContactIn) (*ents.Contact, error) {
 	const query = `
-		INSERT INTO contacts(full_name, phone_number, note)
+		INSERT INTO contacts(full_name, created_by, phone_number, note)
 		VALUES($1, $2, $3)
-		RETURNING id, full_name, phone_number, note
+		RETURNING id, created_by, full_name, phone_number, note
 	`
 
-	var contact domain.Contact
+	var contact ents.Contact
 
 	err := r.db.
 		QueryRow(ctx, query, in.FullName, in.PhoneNumber, in.Note).
-		Scan(&contact.ID, &contact.FullName, &contact.PhoneNumber, &contact.Note)
+		Scan(&contact.ID, &contact.CreatedBy, &contact.FullName, &contact.PhoneNumber, &contact.Note)
 
 	if err != nil {
 		return nil, fmt.Errorf("cannot insert contact: %w", err)
@@ -57,24 +60,24 @@ func (r *Contacts) CreateContact(ctx context.Context, in domain.CreateContactIn)
 	return &contact, nil
 }
 
-func (r *Contacts) UpdateContact(ctx context.Context, in domain.UpdateContactIn) (*domain.Contact, error) {
+func (r *Contacts) Update(ctx context.Context, in ents.UpdateContactIn) (*ents.Contact, error) {
 	const query = `
 		UPDATE contacts 
 		SET full_name = COALESCE(NULLIF($2, ''), full_name), 
 			phone_number = COALESCE(NULLIF($3, ''), phone_number), 
 			note = COALESCE(NULLIF($4, ''), note)
 		WHERE id = $1 
-		RETURNING id, full_name, phone_number, note
+		RETURNING id, created_by, full_name, phone_number, note
 	`
 
-	var contact domain.Contact
+	var contact ents.Contact
 
 	err := r.db.
 		QueryRow(ctx, query, in.ID, in.FullName, in.PhoneNumber, in.Note).
-		Scan(&contact.ID, &contact.FullName, &contact.PhoneNumber, &contact.Note)
+		Scan(&contact.ID, &contact.CreatedBy, &contact.FullName, &contact.PhoneNumber, &contact.Note)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrContactNotExist
+		return nil, errs.NewNotFound(err, "updating contact was not found")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("cannot update contact: %w", err)
@@ -83,7 +86,7 @@ func (r *Contacts) UpdateContact(ctx context.Context, in domain.UpdateContactIn)
 	return &contact, nil
 }
 
-func (r *Contacts) DeleteContact(ctx context.Context, id int64) error {
+func (r *Contacts) Delete(ctx context.Context, id uuid.UUID) error {
 	const query = `
 		DELETE FROM contacts WHERE id = $1
 	`
@@ -95,9 +98,10 @@ func (r *Contacts) DeleteContact(ctx context.Context, id int64) error {
 	return nil
 }
 
-func collectContacts(row pgx.CollectableRow) (contact domain.Contact, err error) {
+func collectContact(row pgx.CollectableRow) (contact ents.Contact, err error) {
 	err = row.Scan(
 		&contact.ID,
+		&contact.CreatedBy,
 		&contact.FullName,
 		&contact.PhoneNumber,
 		&contact.Note,
