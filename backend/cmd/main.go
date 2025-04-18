@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	recoverer "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
@@ -68,8 +69,8 @@ func main() {
 
 	contactsRepo := postgres.NewContacts(postgresConnPool)
 
-	errorHandler := func(c *fiber.Ctx, inError error) error { //todo refactor
-		logger.Error("could not process request", sl.Error(inError)) //todo их хендлеров летят только файбер ошибки
+	errorHandler := func(c *fiber.Ctx, inError error) error {
+		logger.Error("could not process request", sl.Error(inError))
 
 		defaultError := fiber.ErrInternalServerError
 		errors.As(inError, &defaultError)
@@ -95,15 +96,18 @@ func main() {
 		return uuid.New().String()
 	}
 
-	server.Use(request.New( //todo передавать Next bool для того чтобы фильтровать стоит ли запускать мидл
+	server.Use(request.New(
 		request.WithHeaders("X-Request-ID", "xRequestID"),
 		request.WithLoggerKey("request_id"),
 		request.WithGenerator(generator),
 	))
+	server.Use(recoverer.New(recoverer.Config{
+		EnableStackTrace: false,
+	}))
 	server.Use(loggermw.New(
 		loggermw.WithLevel(slog.LevelInfo),
 		loggermw.WithLogger(logger),
-		loggermw.WithMessage("complete request"),
+		loggermw.WithMessage("receive request"),
 	))
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: "*",

@@ -41,7 +41,7 @@ func config(opts []Option) *Options {
 	res := &Options{
 		Level:   slog.LevelInfo,
 		Logger:  logger,
-		Message: "complete request",
+		Message: "handle request",
 	}
 
 	for _, fn := range opts {
