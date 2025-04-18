@@ -21,6 +21,8 @@ import (
 )
 
 //todo panics are not logged via fiber/loggermw
+//todo if there is no .env file godotenv panics!!
+//todo you can run like this POSTGRES_USER=admin go run main.go
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
