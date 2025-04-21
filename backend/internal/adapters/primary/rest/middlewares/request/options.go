@@ -34,8 +34,8 @@ func WithLoggerKey(key string) Option {
 func config(opts []Option) *Options {
 	res := &Options{
 		Generator: generator,
-		Headers:   []string{"X-Request-ID"},
-		LoggerKey: "X-Request-ID",
+		Headers:   []string{"X-Request-ContactID"},
+		LoggerKey: "X-Request-ContactID",
 	}
 
 	for _, fn := range opts {

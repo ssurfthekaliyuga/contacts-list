@@ -1,27 +1,28 @@
 package controllers
 
 import (
+	"contacts-list/internal/adapters/primary/rest"
+	"contacts-list/internal/adapters/primary/rest/middlewares/auth"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type contactDeleter interface {
-	DeleteContact(context.Context, int64) error
+	Delete(ctx context.Context, userID uuid.UUID, contactID uuid.UUID) error
 }
 
 func NewDeleteContact(deleter contactDeleter) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		req := struct {
-			ID int64 `json:"ID"`
-		}{}
-
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.ErrUnprocessableEntity
+		contactID, err := extractContactID(c)
+		if err != nil {
+			return rest.NewUnmarshalError(err) //todo param error
 		}
 
-		err := deleter.DeleteContact(c.Context(), req.ID)
-		if err != nil {
-			return fiber.ErrInternalServerError
+		userID := auth.Extract(c)
+
+		if err = deleter.Delete(c.UserContext(), userID, contactID); err != nil {
+			return err
 		}
 
 		return c.SendStatus(fiber.StatusNoContent)

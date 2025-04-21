@@ -1,14 +1,15 @@
 package main
 
 import (
+	"contacts-list/internal/adapters/primary/rest"
 	"contacts-list/internal/adapters/primary/rest/controllers"
 	loggermw "contacts-list/internal/adapters/primary/rest/middlewares/logger"
 	"contacts-list/internal/adapters/primary/rest/middlewares/request"
 	"contacts-list/internal/adapters/secondary/postgres"
 	"contacts-list/internal/config"
+	"contacts-list/internal/domain/usecases"
 	"contacts-list/pkg/sl"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -70,27 +71,12 @@ func main() {
 
 	contactsRepo := postgres.NewContacts(postgresConnPool)
 
-	errorHandler := func(c *fiber.Ctx, inError error) error {
-		logger.Error("could not process request", sl.Error(inError))
-
-		defaultError := fiber.ErrInternalServerError
-		errors.As(inError, &defaultError)
-
-		body := fiber.Map{
-			"error": map[string]any{
-				"msg": defaultError.Error(),
-			},
-		}
-
-		return c.
-			Status(defaultError.Code).
-			JSON(body)
-	}
+	contactsUsecases := usecases.NewContacts(contactsRepo, logger)
 
 	server := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 		CaseSensitive:         true,
-		ErrorHandler:          errorHandler,
+		ErrorHandler:          rest.NewErrorHandler(logger),
 	})
 
 	generator := func() string {
@@ -98,7 +84,7 @@ func main() {
 	}
 
 	server.Use(request.New(
-		request.WithHeaders("X-Request-ID", "xRequestID"),
+		request.WithHeaders("X-Request-ContactID", "xRequestID"),
 		request.WithLoggerKey("request_id"),
 		request.WithGenerator(generator),
 	))
@@ -118,11 +104,11 @@ func main() {
 
 	v1Group := server.Group("/v1")
 
-	contactsGroup := v1Group.Group("/contact")
-	contactsGroup.Get("/", controllers.NewGetContacts(contactsRepo))
-	contactsGroup.Post("/", controllers.NewCreateContact(contactsRepo))
-	contactsGroup.Put("/", controllers.NewUpdateContact(contactsRepo)) //todo patch
-	contactsGroup.Delete("/", controllers.NewDeleteContact(contactsRepo))
+	contactsGroup := v1Group.Group("/contacts")
+	contactsGroup.Get("/", controllers.NewGetContacts(contactsUsecases))
+	contactsGroup.Post("/", controllers.NewCreateContact(contactsUsecases))
+	contactsGroup.Patch("/:contactID", controllers.NewUpdateContact(contactsUsecases)) //вынести :contactID куда то
+	contactsGroup.Delete("/:contactID", controllers.NewDeleteContact(contactsUsecases))
 
 	addr := fmt.Sprintf("%s:%s", conf.HTTPServer.Host, conf.HTTPServer.Port)
 

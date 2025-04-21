@@ -73,7 +73,7 @@ func (r *Contacts) Update(ctx context.Context, in ents.UpdateContactIn) (*ents.C
 	var contact ents.Contact
 
 	err := r.db.
-		QueryRow(ctx, query, in.ID, in.FullName, in.PhoneNumber, in.Note).
+		QueryRow(ctx, query, in.ContactID, in.FullName, in.PhoneNumber, in.Note).
 		Scan(&contact.ID, &contact.CreatedBy, &contact.FullName, &contact.PhoneNumber, &contact.Note)
 
 	if errors.Is(err, pgx.ErrNoRows) {

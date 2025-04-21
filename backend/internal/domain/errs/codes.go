@@ -3,7 +3,7 @@ package errs
 type Code string
 
 const (
-	CodeInternal   = "internal"
-	CodeValidation = "validation"
-	CodeNotFound   = "not_found"
+	CodeValidation   = "validation"
+	CodeNotFound     = "not_found"
+	CodeUnauthorized = "unauthorized"
 )

@@ -27,7 +27,7 @@ type CreateContactIn struct {
 }
 
 type UpdateContactIn struct {
-	ID          uuid.UUID
+	ContactID   uuid.UUID
 	FullName    string
 	PhoneNumber string
 	Note        string

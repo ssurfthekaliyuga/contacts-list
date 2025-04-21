@@ -1,13 +1,15 @@
 package controllers
 
 import (
+	"contacts-list/internal/adapters/primary/rest/middlewares/auth"
 	"contacts-list/internal/domain/ents"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type contactProvider interface {
-	GetContacts(context.Context, ents.GetContactsIn) ([]ents.Contact, error)
+	Get(ctx context.Context, userID uuid.UUID, in ents.GetContactsIn) ([]ents.Contact, error)
 }
 
 func NewGetContacts(provider contactProvider) fiber.Handler {
@@ -17,9 +19,11 @@ func NewGetContacts(provider contactProvider) fiber.Handler {
 			Size: c.QueryInt("size", 10),
 		}
 
-		contacts, err := provider.GetContacts(c.Context(), in)
+		userID := auth.Extract(c)
+
+		contacts, err := provider.Get(c.UserContext(), userID, in)
 		if err != nil {
-			return fiber.ErrInternalServerError
+			return err
 		}
 
 		return c.JSON(fiber.Map{

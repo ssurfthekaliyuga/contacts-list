@@ -1,24 +1,46 @@
 package controllers
 
 import (
+	"contacts-list/internal/adapters/primary/rest"
+	"contacts-list/internal/adapters/primary/rest/middlewares/auth"
 	"contacts-list/internal/domain/ents"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
+type updateContactIn struct {
+	FullName    string `json:"fullName"`
+	PhoneNumber string `json:"phoneNumber"`
+	Note        string `json:"note"`
+}
+
 type contactUpdater interface {
-	UpdateContact(context.Context, ents.UpdateContactIn) (*ents.Contact, error)
+	Update(ctx context.Context, userID uuid.UUID, in ents.UpdateContactIn) (*ents.Contact, error)
 }
 
 func NewUpdateContact(updater contactUpdater) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in ents.UpdateContactIn
-
-		if err := c.BodyParser(&in); err != nil {
-			return fiber.ErrUnprocessableEntity
+		var body updateContactIn
+		if err := c.BodyParser(&body); err != nil {
+			return rest.NewUnmarshalError(err)
 		}
 
-		contact, err := updater.UpdateContact(c.Context(), in)
+		contactID, err := extractContactID(c)
+		if err != nil {
+			return rest.NewUnmarshalError(err) //todo param error
+		}
+
+		in := ents.UpdateContactIn{
+			ContactID:   contactID,
+			FullName:    body.FullName,
+			PhoneNumber: body.PhoneNumber,
+			Note:        body.Note,
+		}
+
+		userID := auth.Extract(c)
+
+		contact, err := updater.Update(c.UserContext(), userID, in)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package domain
+package usecases
 
 import (
 	"contacts-list/internal/domain/ents"
