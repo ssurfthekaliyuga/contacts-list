@@ -24,8 +24,9 @@ func NewContacts(db *pgxpool.Pool) *Contacts {
 func (r *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Contact, error) { //todo pagination
 	const query = `
 		SELECT id, created_by, full_name, phone_number, note 
-		FROM contacts LIMIT $1 OFFSET $2
+		FROM contacts
 		WHERE created_by = $3
+		LIMIT $1 OFFSET $2
 	`
 
 	limit := in.Size
@@ -42,7 +43,7 @@ func (r *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Conta
 
 func (r *Contacts) Create(ctx context.Context, in ents.CreateContactIn) (*ents.Contact, error) {
 	const query = `
-		INSERT INTO contacts(full_name, created_by, phone_number, note)
+		INSERT INTO contacts(id, full_name, phone_number, note)
 		VALUES($1, $2, $3)
 		RETURNING id, created_by, full_name, phone_number, note
 	`
@@ -50,7 +51,7 @@ func (r *Contacts) Create(ctx context.Context, in ents.CreateContactIn) (*ents.C
 	var contact ents.Contact
 
 	err := r.db.
-		QueryRow(ctx, query, in.FullName, in.PhoneNumber, in.Note).
+		QueryRow(ctx, query, uuid.New(), in.FullName, in.PhoneNumber, in.Note).
 		Scan(&contact.ID, &contact.CreatedBy, &contact.FullName, &contact.PhoneNumber, &contact.Note)
 
 	if err != nil {

@@ -3,7 +3,7 @@ package main
 import (
 	"contacts-list/internal/adapters/primary/rest"
 	"contacts-list/internal/adapters/primary/rest/controllers"
-	loggermw "contacts-list/internal/adapters/primary/rest/middlewares/logger"
+	loggermv "contacts-list/internal/adapters/primary/rest/middlewares/logger"
 	"contacts-list/internal/adapters/primary/rest/middlewares/request"
 	"contacts-list/internal/adapters/secondary/postgres"
 	"contacts-list/internal/config"
@@ -91,10 +91,10 @@ func main() {
 	server.Use(recoverer.New(recoverer.Config{
 		EnableStackTrace: false,
 	}))
-	server.Use(loggermw.New(
-		loggermw.WithLevel(slog.LevelInfo),
-		loggermw.WithLogger(logger),
-		loggermw.WithMessage("receive request"),
+	server.Use(loggermv.New(
+		loggermv.WithLevel(slog.LevelInfo),
+		loggermv.WithLogger(logger),
+		loggermv.WithMessage("receive request"),
 	))
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
