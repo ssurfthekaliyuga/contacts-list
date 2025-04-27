@@ -22,7 +22,7 @@ func NewCreateContact(creator contactCreator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body createContactBody
 		if err := c.BodyParser(&body); err != nil {
-			return rest.NewUnmarshalError(err)
+			return rest.NewUnmarshalError(err) //todo
 		}
 
 		in := ents.CreateContactIn{

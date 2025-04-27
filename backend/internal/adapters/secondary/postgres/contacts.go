@@ -32,7 +32,7 @@ func (r *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Conta
 	limit := in.Size
 	offset := in.Page * in.Size
 
-	rows, err := r.db.Query(ctx, query, limit, offset, in.CreatedBy)
+	rows, err := r.db.Query(ctx, query, limit, offset, in.CreatorID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,15 +43,15 @@ func (r *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Conta
 
 func (r *Contacts) Create(ctx context.Context, in ents.CreateContactIn) (*ents.Contact, error) {
 	const query = `
-		INSERT INTO contacts(id, full_name, phone_number, note)
-		VALUES($1, $2, $3)
+		INSERT INTO contacts(id, created_by, full_name, phone_number, note)
+		VALUES($1, $2, $3, $4, $5)
 		RETURNING id, created_by, full_name, phone_number, note
 	`
 
 	var contact ents.Contact
 
 	err := r.db.
-		QueryRow(ctx, query, uuid.New(), in.FullName, in.PhoneNumber, in.Note).
+		QueryRow(ctx, query, uuid.New(), in.CreatorID, in.FullName, in.PhoneNumber, in.Note).
 		Scan(&contact.ID, &contact.CreatedBy, &contact.FullName, &contact.PhoneNumber, &contact.Note)
 
 	if err != nil {

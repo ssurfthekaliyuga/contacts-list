@@ -1,25 +1,24 @@
 package logger
 
 import (
-	"log/slog"
-	"os"
+	"contacts-list/pkg/sl"
 )
 
 type Options struct {
-	Level   slog.Level
-	Logger  *slog.Logger
+	Level   sl.Level
+	Logger  sl.Logger
 	Message string
 }
 
 type Option func(*Options)
 
-func WithLevel(level slog.Level) Option {
+func WithLevel(level sl.Level) Option {
 	return func(o *Options) {
 		o.Level = level
 	}
 }
 
-func WithLogger(logger *slog.Logger) Option {
+func WithLogger(logger sl.Logger) Option {
 	return func(o *Options) {
 		o.Logger = logger
 	}
@@ -32,15 +31,9 @@ func WithMessage(msg string) Option {
 }
 
 func config(opts []Option) *Options {
-	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	})
-
-	logger := slog.New(handler)
-
 	res := &Options{
-		Level:   slog.LevelInfo,
-		Logger:  logger,
+		Level:   sl.LevelInfo,
+		Logger:  sl.NewDefaultLogger(),
 		Message: "handle request",
 	}
 

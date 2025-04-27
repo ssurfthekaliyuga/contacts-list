@@ -23,7 +23,7 @@ func NewUpdateContact(updater contactUpdater) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body updateContactIn
 		if err := c.BodyParser(&body); err != nil {
-			return rest.NewUnmarshalError(err)
+			return rest.NewUnmarshalError(err) //todo
 		}
 
 		contactID, err := extractContactID(c)

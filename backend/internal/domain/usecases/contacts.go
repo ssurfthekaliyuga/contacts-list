@@ -2,9 +2,9 @@ package usecases
 
 import (
 	"contacts-list/internal/domain/ents"
+	"contacts-list/pkg/sl"
 	"context"
 	"github.com/google/uuid"
-	"log/slog"
 )
 
 type contactsRepo interface {
@@ -16,17 +16,17 @@ type contactsRepo interface {
 
 type Contacts struct {
 	repo   contactsRepo
-	logger *slog.Logger
+	logger sl.Logger
 }
 
-func NewContacts(repo contactsRepo, logger *slog.Logger) *Contacts {
+func NewContacts(repo contactsRepo, logger sl.Logger) *Contacts {
 	return &Contacts{
 		repo:   repo,
 		logger: logger,
 	}
 }
 
-func (c *Contacts) Get(ctx context.Context, userID uuid.UUID, in ents.GetContactsIn) ([]ents.Contact, error) { //todo проверять кто запрашивает
+func (c *Contacts) Get(ctx context.Context, in ents.GetContactsIn) ([]ents.Contact, error) {
 	return c.repo.Get(ctx, in)
 }
 

@@ -13,7 +13,7 @@ type Contact struct {
 }
 
 type GetContactsIn struct {
-	CreatedBy uuid.UUID
+	CreatorID uuid.UUID
 	Page      int
 	Size      int
 	ForUpdate bool

@@ -10,17 +10,9 @@ import (
 )
 
 type Config struct {
-	Postgres   Postgres   `mapstructure:"postgres"`
+	Postgres   string     `mapstructure:"postgres"`
 	HTTPServer HTTPServer `mapstructure:"http_server"`
 	Logger     Logger     `mapstructure:"logger"`
-}
-
-type Postgres struct {
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	DB       string `mapstructure:"db"`
-	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"port"`
 }
 
 type HTTPServer struct {
@@ -34,16 +26,36 @@ type Logger struct { //todo time format
 	HandlerType string `mapstructure:"handler_type"`
 }
 
+var (
+	defaultConfigPath = "config.yaml"
+	warnEnv           = "(please, do not use .env files in production environment it is not secure)"
+	envPath           = flag.String("env", "", "Path to .env credentials file")
+)
+
+func init() {
+	flag.Parse()
+}
+
 func Read() (*Config, error) {
-	if err := godotenv.Load(); err != nil { //todo delete it when if i will start using dev container
-		return nil, fmt.Errorf("cannot read .env file (you must not use .env file in production): %w", err)
+	if envPath != nil && *envPath != "" {
+		err := godotenv.Load(*envPath)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read .env file (%s) (%s): %w", *envPath, warnEnv, err)
+		}
+	}
+
+	var configPath string
+	if path := os.Getenv("CONFIG_PATH"); path != "" {
+		configPath = path
+	} else {
+		configPath = defaultConfigPath
 	}
 
 	vp := viper.New()
 
-	vp.SetConfigFile(configPath())
+	vp.SetConfigFile(configPath)
 	if err := vp.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("cannot read config file: %w", err)
+		return nil, fmt.Errorf("cannot read config file (%s): %w", configPath, err)
 	}
 
 	var conf Config
@@ -61,26 +73,10 @@ func (c *Config) expandEnv() (*Config, error) {
 	}
 
 	expanded := os.ExpandEnv(string(bytes))
-	_ = json.Unmarshal([]byte(expanded), c)
+
+	if err := json.Unmarshal([]byte(expanded), c); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal config from json in order to expand env varibles: %w", err)
+	}
 
 	return c, nil
-}
-
-func configPath() string {
-	var (
-		pathDefault = "config.yaml"
-		pathFlag    = flag.String("config", "", "path to yaml config file")
-		pathEnv     = os.Getenv("CONFIG")
-	)
-
-	flag.Parse()
-
-	switch {
-	case *pathFlag != "":
-		return *pathFlag
-	case pathEnv != "":
-		return pathEnv
-	default:
-		return pathDefault
-	}
 }

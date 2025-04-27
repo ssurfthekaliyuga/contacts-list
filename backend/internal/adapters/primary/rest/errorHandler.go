@@ -10,10 +10,10 @@ import (
 )
 
 type errorHandler struct {
-	logger *slog.Logger
+	logger sl.Logger
 }
 
-func NewErrorHandler(logger *slog.Logger) fiber.ErrorHandler {
+func NewErrorHandler(logger sl.Logger) fiber.ErrorHandler {
 	handler := &errorHandler{
 		logger: logger,
 	}
@@ -53,7 +53,7 @@ func (h *errorHandler) convertAppError(c *fiber.Ctx, appErr *errs.AppError) *app
 	}
 
 	h.logger.Log(c.UserContext(), appErr.Level, "error",
-		sl.Error(appErr),
+		sl.Err(appErr),
 		sl.Struct(*appErr),
 	)
 
@@ -75,7 +75,7 @@ func (h *errorHandler) convertFiberError(c *fiber.Ctx, fiberErr *fiber.Error) *a
 	}
 
 	h.logger.Log(c.UserContext(), level, "error",
-		sl.Error(fiberErr),
+		sl.Err(fiberErr),
 		sl.Struct(*fiberErr),
 	)
 
@@ -87,8 +87,8 @@ func (h *errorHandler) convertFiberError(c *fiber.Ctx, fiberErr *fiber.Error) *a
 }
 
 func (h *errorHandler) convertInternalError(c *fiber.Ctx, err error) *appError {
-	h.logger.ErrorContext(c.UserContext(), "internal server error",
-		sl.Error(err),
+	h.logger.Error(c.UserContext(), "internal server error",
+		sl.Err(err),
 	)
 
 	return &appError{
