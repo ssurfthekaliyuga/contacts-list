@@ -1,9 +1,7 @@
-package rest
+package fiber
 
 import (
-	"contacts-list/internal/domain/errs"
 	"github.com/gofiber/fiber/v2"
-	"log/slog"
 )
 
 type appError struct {
@@ -16,14 +14,4 @@ type appError struct {
 
 func (e *appError) send(c *fiber.Ctx) error {
 	return c.Status(e.StatusCode).JSON(e)
-}
-
-func NewUnmarshalError(err error) *errs.AppError { //todo
-	return &errs.AppError{
-		Underlying: err,
-		Message:    "cannot unmarshal request",
-		Code:       errs.CodeValidation,
-		Level:      slog.LevelInfo,
-		Additional: nil,
-	}
 }

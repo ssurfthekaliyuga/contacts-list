@@ -4,7 +4,7 @@ import (
 	"contacts-list/pkg/sl"
 )
 
-type Options struct {
+type Options struct { //todo make all Options required refuse functional options
 	Level   sl.Level
 	Logger  sl.Logger
 	Message string
@@ -33,7 +33,7 @@ func WithMessage(msg string) Option {
 func config(opts []Option) *Options {
 	res := &Options{
 		Level:   sl.LevelInfo,
-		Logger:  sl.NewDefaultLogger(),
+		Logger:  sl.Logger{}, //todo
 		Message: "handle request",
 	}
 

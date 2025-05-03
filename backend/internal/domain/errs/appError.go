@@ -12,7 +12,7 @@ type AppError struct {
 	Additional map[string]any
 }
 
-func (e *AppError) Error() string {
+func (e *AppError) Error() string { //TODO
 	return e.Message
 }
 

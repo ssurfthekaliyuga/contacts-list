@@ -5,5 +5,5 @@ CREATE TABLE contacts
     full_name    VARCHAR(255),
     phone_number VARCHAR(20),
     note         TEXT,
-    created_at   TIMESTAMPTZ DEFAULT now() ---todo проверить нужен ли реально z при пуше одного времени в разных зонах в го
+    created_at   TIMESTAMPTZ DEFAULT now()
 );

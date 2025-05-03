@@ -1,40 +1,18 @@
 package config
 
 import (
+	"contacts-list/internal/common/logger"
+	"contacts-list/internal/primary/rest/endpoints"
+	"contacts-list/internal/primary/rest/fiber"
+	"contacts-list/internal/secondary/postgres"
+	"contacts-list/pkg/sl"
 	"encoding/json"
-	"flag"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"os"
 )
-
-type Config struct {
-	Postgres   string     `mapstructure:"postgres"`
-	HTTPServer HTTPServer `mapstructure:"http_server"`
-	Logger     Logger     `mapstructure:"logger"`
-}
-
-type HTTPServer struct {
-	Host string `mapstructure:"host"`
-	Port string `mapstructure:"port"`
-}
-
-type Logger struct { //todo time format
-	Level       int    `mapstructure:"level"`
-	AddSource   bool   `mapstructure:"add_source"`
-	HandlerType string `mapstructure:"handler_type"`
-}
-
-var (
-	defaultConfigPath = "config.yaml"
-	warnEnv           = "(please, do not use .env files in production environment it is not secure)"
-	envPath           = flag.String("env", "", "Path to .env credentials file")
-)
-
-func init() {
-	flag.Parse()
-}
 
 func Read() (*Config, error) {
 	if envPath != nil && *envPath != "" {
@@ -64,6 +42,42 @@ func Read() (*Config, error) {
 	}
 
 	return conf.expandEnv()
+}
+
+func (c *Config) Logger() logger.Config {
+	return logger.Config{
+		AddSource:   c.LoggerConf.AddSource,
+		Level:       sl.Level(c.LoggerConf.Level),
+		HandlerType: logger.HandlerType(c.LoggerConf.HandlerType),
+	}
+}
+
+func (c *Config) Postgres() postgres.Config {
+	return postgres.Config{
+		ConnString: c.PostgresConf.ConnString,
+	}
+}
+
+func (c *Config) FiberServer() fiber.Config {
+	return fiber.Config{
+		Host: c.HTTPServerConf.Host,
+		Port: c.HTTPServerConf.Port,
+	}
+}
+
+func (c *Config) EndpointsV1() endpoints.V1Config {
+	return endpoints.V1Config{
+		Cors: cors.Config{
+			Next:             nil,
+			AllowOriginsFunc: nil,
+			AllowOrigins:     c.HTTPServerConf.EndpointsV1.Cors.AllowOrigins,
+			AllowMethods:     c.HTTPServerConf.EndpointsV1.Cors.AllowMethods,
+			AllowHeaders:     c.HTTPServerConf.EndpointsV1.Cors.AllowHeaders,
+			AllowCredentials: false,
+			ExposeHeaders:    "",
+			MaxAge:           0,
+		},
+	}
 }
 
 func (c *Config) expandEnv() (*Config, error) {

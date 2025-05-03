@@ -20,3 +20,4 @@ volumes:
 
 networks:
   contacts-service-network:
+# todo delete this line
